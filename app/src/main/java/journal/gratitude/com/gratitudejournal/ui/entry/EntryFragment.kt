@@ -42,7 +42,6 @@ import journal.gratitude.com.gratitudejournal.model.COPIED_QUOTE
 import journal.gratitude.com.gratitudejournal.model.SHARED_ENTRY
 import journal.gratitude.com.gratitudejournal.ui.dialog.CelebrateDialogFragment
 import journal.gratitude.com.gratitudejournal.util.backups.UploadToCloudWorker
-import journal.gratitude.com.gratitudejournal.util.backups.dropbox.DropboxUploader
 import journal.gratitude.com.gratitudejournal.util.toFullString
 import org.threeten.bp.LocalDate
 import java.util.concurrent.TimeUnit
@@ -220,12 +219,10 @@ class EntryFragment : Fragment(), MavericksView, EntryScreenCallbacks {
     }
 
     private fun backupEntryIfNeeded() {
-        val dbxCredential = settings.getAccessToken()
-
         val cadence = settings.getAutomaticBackupCadence()
-        if (dbxCredential != null && cadence == BackupCadence.EVERY_CHANGE) {
+        if (cadence == BackupCadence.EVERY_CHANGE) {
             val uploadWorkRequest = OneTimeWorkRequestBuilder<UploadToCloudWorker>()
-                .addTag(DropboxUploader.PRESENTLY_BACKUP)
+                .addTag(PRESENTLY_BACKUP)
                 .build()
             WorkManager.getInstance(requireContext()).enqueue(uploadWorkRequest)
         }
@@ -299,6 +296,7 @@ class EntryFragment : Fragment(), MavericksView, EntryScreenCallbacks {
         }
 
         const val ENTRY_TO_SHARE = "ENTRY_TO_SHARE"
+        const val PRESENTLY_BACKUP = "PRESENTLY_BACKUP"
     }
 
     override fun showSaveDialog() {
