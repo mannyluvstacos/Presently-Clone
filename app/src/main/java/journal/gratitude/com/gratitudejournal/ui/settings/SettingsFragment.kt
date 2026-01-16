@@ -556,7 +556,6 @@ class SettingsFragment : PreferenceFragmentCompat(),
     companion object {
         const val BACKUP_TOKEN = "dropbox_pref"
         const val SETTINGS_TO_THEME = "SETTINGS_TO_THEME"
-        const val PRESENTLY_BACKUP = "PRESENTLY_BACKUP"
     }
 }
 

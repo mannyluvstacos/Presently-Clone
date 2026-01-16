@@ -31,6 +31,7 @@ import com.jakewharton.rxbinding2.widget.RxTextView
 import com.presently.logging.AnalyticsLogger
 import com.presently.settings.BackupCadence
 import com.presently.settings.PresentlySettings
+import com.presently.settings.model.PRESENTLY_BACKUP
 import com.presently.sharing.view.SharingFragment
 import com.presently.ui.setStatusBarColorsForBackground
 import dagger.hilt.android.AndroidEntryPoint
@@ -296,7 +297,6 @@ class EntryFragment : Fragment(), MavericksView, EntryScreenCallbacks {
         }
 
         const val ENTRY_TO_SHARE = "ENTRY_TO_SHARE"
-        const val PRESENTLY_BACKUP = "PRESENTLY_BACKUP"
     }
 
     override fun showSaveDialog() {

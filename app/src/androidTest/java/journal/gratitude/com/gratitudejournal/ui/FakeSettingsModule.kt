@@ -83,12 +83,12 @@ class FakePresentlySettings @Inject constructor(): PresentlySettings {
     }
 
     @Deprecated("Dropbox support removed")
-    override fun getAccessToken(): Nothing? {
+    override fun getAccessToken(): Any? {
         return null
     }
 
     @Deprecated("Dropbox support removed")
-    override fun setAccessToken(newToken: Nothing) {}
+    override fun setAccessToken(newToken: Any?) {}
 
     @Deprecated("Dropbox support removed")
     override fun wasDropboxAuthInitiated(): Boolean = false

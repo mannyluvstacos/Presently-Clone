@@ -34,10 +34,10 @@ interface PresentlySettings {
     fun shouldShowDayOfWeekInTimeline(): Boolean
 
     @Deprecated("Dropbox support removed")
-    fun getAccessToken(): Nothing?
+    fun getAccessToken(): Any?
 
     @Deprecated("Dropbox support removed")
-    fun setAccessToken(newToken: Nothing)
+    fun setAccessToken(newToken: Any?)
 
     @Deprecated("Dropbox support removed")
     fun wasDropboxAuthInitiated(): Boolean

@@ -69,9 +69,9 @@ class UploaderTest {
     }
 
     private val settings = object : PresentlySettings {
-        override fun getAccessToken(): Nothing? = null
+        override fun getAccessToken(): Any? = null
         override fun clearAccessToken() = fail("Not needed in this test")
-        override fun setAccessToken(newToken: Nothing) = fail("Not needed in this test")
+        override fun setAccessToken(newToken: Any?) = fail("Not needed in this test")
         override fun getCurrentTheme(): String = fail("Not needed in this test")
         override fun setTheme(themeName: String) = fail("Not needed in this test")
         override fun isBiometricsEnabled(): Boolean = fail("Not needed in this test")
