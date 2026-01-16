@@ -1,22 +1,23 @@
 package journal.gratitude.com.gratitudejournal.ui
 
+import android.content.Context
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dagger.hilt.testing.TestInstallIn
 import journal.gratitude.com.gratitudejournal.di.CloudUploadModule
-import journal.gratitude.com.gratitudejournal.fakes.FakeCloudUploader
+import journal.gratitude.com.gratitudejournal.fakes.FakeLocalBackupProvider
 import journal.gratitude.com.gratitudejournal.fakes.FakeUploader
-import journal.gratitude.com.gratitudejournal.util.backups.RealUploader
+import journal.gratitude.com.gratitudejournal.util.backups.LocalBackupProvider
 import journal.gratitude.com.gratitudejournal.util.backups.Uploader
-import journal.gratitude.com.gratitudejournal.util.backups.dropbox.CloudProvider
 import javax.inject.Singleton
 
 /**
- * CloudProvider binding to use in tests.
+ * LocalBackupProvider binding to use in tests.
  *
- * Hilt will inject a [FakeCloudUploader] instead of a [DropboxUploader].
+ * Hilt will inject a [FakeLocalBackupProvider] instead of a real [LocalBackupProvider].
  */
 @Module
 @TestInstallIn(
@@ -24,9 +25,13 @@ import javax.inject.Singleton
     replaces = [CloudUploadModule::class]
 )
 abstract class FakeCloudUploadModule {
-    @Singleton
-    @Binds
-    abstract fun bindCloudProvider(repo: FakeCloudUploader): CloudProvider
+    
+    companion object {
+        @Provides
+        fun provideLocalBackupProvider(@ApplicationContext context: Context): LocalBackupProvider {
+            return FakeLocalBackupProvider(context)
+        }
+    }
 
     @Singleton
     @Binds

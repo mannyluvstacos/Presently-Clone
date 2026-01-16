@@ -5,12 +5,6 @@ import androidx.lifecycle.LiveData
 import androidx.paging.PagingData
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.ListenableWorker
-import com.dropbox.core.InvalidAccessTokenException
-import com.dropbox.core.LocalizedText
-import com.dropbox.core.oauth.DbxCredential
-import com.dropbox.core.v2.auth.AuthError.INVALID_ACCESS_TOKEN
-import com.dropbox.core.v2.files.UploadError.OTHER
-import com.dropbox.core.v2.files.UploadErrorException
 import com.google.common.truth.Truth.assertThat
 import com.presently.coroutine_utils.AppCoroutineDispatchers
 import com.presently.logging.AnalyticsLogger
@@ -22,14 +16,12 @@ import journal.gratitude.com.gratitudejournal.model.Entry
 import journal.gratitude.com.gratitudejournal.model.UploadError
 import journal.gratitude.com.gratitudejournal.model.UploadSuccess
 import journal.gratitude.com.gratitudejournal.repository.EntryRepository
-import journal.gratitude.com.gratitudejournal.util.backups.dropbox.CloudProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.test.TestCoroutineDispatcher
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Test
 import org.threeten.bp.LocalDate
 import org.threeten.bp.LocalTime
-import java.io.File
 import java.lang.Exception
 import kotlin.test.fail
 
@@ -57,11 +49,11 @@ class UploaderTest {
             fail("Not needed in this test")
     }
 
-    private var wasCloudProviderCalled = false
+    private var wasBackupProviderCalled = false
 
-    private val cloudProvider = object : CloudProvider {
-        override suspend fun uploadToCloud(file: File): CloudUploadResult {
-            wasCloudProviderCalled = true
+    private val backupProvider = object : LocalBackupProvider(context) {
+        override suspend fun createBackup(entries: List<Entry>): CloudUploadResult {
+            wasBackupProviderCalled = true
             return UploadSuccess
         }
     }
@@ -76,14 +68,10 @@ class UploaderTest {
         override fun optIntoCrashReporting() = fail("Not needed in this test")
     }
 
-    private var wasAccessTokenCleared = false
-
     private val settings = object : PresentlySettings {
-        override fun getAccessToken(): DbxCredential? = null
-        override fun clearAccessToken() {
-            wasAccessTokenCleared = true
-        }
-        override fun setAccessToken(newToken: DbxCredential) = fail("Not needed in this test")
+        override fun getAccessToken(): Nothing? = null
+        override fun clearAccessToken() = fail("Not needed in this test")
+        override fun setAccessToken(newToken: Nothing) = fail("Not needed in this test")
         override fun getCurrentTheme(): String = fail("Not needed in this test")
         override fun setTheme(themeName: String) = fail("Not needed in this test")
         override fun isBiometricsEnabled(): Boolean = fail("Not needed in this test")
@@ -118,7 +106,7 @@ class UploaderTest {
 
     @Test
     fun emptyRepositoryDoesNothing() = runBlockingTest {
-        wasCloudProviderCalled = false
+        wasBackupProviderCalled = false
         val repo = object : EntryRepository {
             override suspend fun getEntries(): List<Entry> {
                 return emptyList()
@@ -132,59 +120,38 @@ class UploaderTest {
                 fail("Not needed in this test")
         }
 
-        val uploader = RealUploader(dispatchers, repo, cloudProvider, crashReporter, settings)
+        val uploader = RealUploader(dispatchers, repo, backupProvider, crashReporter, settings)
 
         val actual = uploader.uploadEntries(context)
 
         assertThat(actual).isEqualTo(ListenableWorker.Result.success())
-        assertThat(wasCloudProviderCalled).isFalse() //don't use the cloud provider here since there is no data to upload
+        assertThat(wasBackupProviderCalled).isFalse() //don't use the backup provider here since there is no data to upload
     }
 
     @Test
-    fun successfulUpload() = runBlockingTest {
-        wasCloudProviderCalled = false
-        val uploader = RealUploader(dispatchers, repo, cloudProvider, crashReporter, settings)
+    fun successfulBackup() = runBlockingTest {
+        wasBackupProviderCalled = false
+        val uploader = RealUploader(dispatchers, repo, backupProvider, crashReporter, settings)
         val actual = uploader.uploadEntries(context)
 
         assertThat(actual).isEqualTo(ListenableWorker.Result.success())
-        assertThat(wasCloudProviderCalled).isTrue()
+        assertThat(wasBackupProviderCalled).isTrue()
     }
 
     @Test
-    fun invalidAccessTokenUpload() = runBlockingTest {
-        wasAccessTokenCleared = false
+    fun failedBackup() = runBlockingTest {
         crashReporter.loggedException = null
-        val exception = InvalidAccessTokenException("requestId", "message", INVALID_ACCESS_TOKEN)
-        val cloudProvider = object : CloudProvider {
-            override suspend fun uploadToCloud(file: File): CloudUploadResult {
+        val exception = Exception("Backup failed")
+        val failingBackupProvider = object : LocalBackupProvider(context) {
+            override suspend fun createBackup(entries: List<Entry>): CloudUploadResult {
                 return UploadError(exception)
             }
         }
 
-        val uploader = RealUploader(dispatchers, repo, cloudProvider, crashReporter, settings)
+        val uploader = RealUploader(dispatchers, repo, failingBackupProvider, crashReporter, settings)
         val actual = uploader.uploadEntries(context)
 
         assertThat(actual).isEqualTo(ListenableWorker.Result.failure())
-        assertThat(wasAccessTokenCleared).isTrue() //clear access tokens
-        assertThat(crashReporter.loggedException).isEqualTo(exception) //log the exception
-    }
-
-    @Test
-    fun insufficientSpaceUpload() = runBlockingTest {
-        wasAccessTokenCleared = false
-        crashReporter.loggedException = null
-        val exception = UploadErrorException("/route", "requestId", LocalizedText("insufficient_space", "en_US"), OTHER)
-        val cloudProvider = object : CloudProvider {
-            override suspend fun uploadToCloud(file: File): CloudUploadResult {
-                return UploadError(exception)
-            }
-        }
-
-        val uploader = RealUploader(dispatchers, repo, cloudProvider, crashReporter, settings)
-        val actual = uploader.uploadEntries(context)
-
-        assertThat(actual).isEqualTo(ListenableWorker.Result.failure())
-        assertThat(wasAccessTokenCleared).isFalse() //dont clear access tokens
         assertThat(crashReporter.loggedException).isEqualTo(exception) //log the exception
     }
 }
