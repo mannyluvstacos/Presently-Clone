@@ -1,7 +1,6 @@
 package journal.gratitude.com.gratitudejournal.ui
 
 import android.content.Context
-import com.dropbox.core.oauth.DbxCredential
 import com.presently.settings.BackupCadence
 import com.presently.settings.PresentlySettings
 import com.presently.settings.wiring.PresentlySettingsModule
@@ -83,18 +82,24 @@ class FakePresentlySettings @Inject constructor(): PresentlySettings {
         return false
     }
 
-    override fun getAccessToken(): DbxCredential? {
+    @Deprecated("Dropbox support removed")
+    override fun getAccessToken(): Nothing? {
         return null
     }
 
-    override fun setAccessToken(newToken: DbxCredential) {}
+    @Deprecated("Dropbox support removed")
+    override fun setAccessToken(newToken: Nothing) {}
 
+    @Deprecated("Dropbox support removed")
     override fun wasDropboxAuthInitiated(): Boolean = false
 
+    @Deprecated("Dropbox support removed")
     override fun markDropboxAuthAsCancelled() {}
 
+    @Deprecated("Dropbox support removed")
     override fun markDropboxAuthInitiated() {}
 
+    @Deprecated("Dropbox support removed")
     override fun clearAccessToken() { }
 
     override fun isOptedIntoAnalytics(): Boolean = true

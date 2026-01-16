@@ -4,10 +4,7 @@ import android.app.AlarmManager
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
-import com.dropbox.core.oauth.DbxCredential
 import com.presently.logging.AnalyticsLogger
-import com.presently.logging.DROPBOX_AUTH_QUIT
-import com.presently.logging.DROPBOX_AUTH_SUCCESS
 import com.presently.settings.model.*
 import java.util.*
 import org.threeten.bp.LocalTime
@@ -105,46 +102,34 @@ class RealPresentlySettings @Inject constructor(
         return sharedPrefs.getBoolean(DAY_OF_WEEK, false)
     }
 
-    override fun getAccessToken(): DbxCredential? {
-        val serializedToken = sharedPrefs.getString(ACCESS_TOKEN, null)
-        return when {
-            serializedToken == "attempted" -> null
-            serializedToken == null -> null
-            serializedToken.contains("{") -> {
-                //this user has a refresh token
-                DbxCredential.Reader.readFully(serializedToken)
-            }
-            else -> {
-                //this user has a long lived access token
-                    //users who auth'd with Dropbox before
-                DbxCredential(serializedToken)
-            }
-        }
+    @Deprecated("Dropbox support removed")
+    override fun getAccessToken(): Nothing? {
+        return null
     }
 
-    override fun setAccessToken(newToken: DbxCredential) {
-        analytics.recordEvent(DROPBOX_AUTH_SUCCESS)
-        sharedPrefs.edit().putString(ACCESS_TOKEN, newToken.toString()).apply()
+    @Deprecated("Dropbox support removed")
+    override fun setAccessToken(newToken: Nothing) {
+        // No-op: Dropbox support removed
     }
 
+    @Deprecated("Dropbox support removed")
     override fun markDropboxAuthInitiated() {
-        sharedPrefs.edit().putString(ACCESS_TOKEN, "attempted").apply()
+        // No-op: Dropbox support removed
     }
 
+    @Deprecated("Dropbox support removed")
     override fun wasDropboxAuthInitiated(): Boolean {
-        val token = sharedPrefs.getString(ACCESS_TOKEN, null) ?: return false
-        return token == "attempted"
+        return false
     }
 
+    @Deprecated("Dropbox support removed")
     override fun markDropboxAuthAsCancelled() {
-        sharedPrefs.edit().putBoolean(BACKUP_TOKEN, false).apply() //reset the switch preference
-        sharedPrefs.edit().remove(ACCESS_TOKEN).apply()
-        analytics.recordEvent(DROPBOX_AUTH_QUIT)
+        // No-op: Dropbox support removed
     }
 
+    @Deprecated("Dropbox support removed")
     override fun clearAccessToken() {
-        sharedPrefs.edit().remove(ACCESS_TOKEN).apply()
-        sharedPrefs.edit().putBoolean(BACKUP_TOKEN, false).apply()
+        // No-op: Dropbox support removed
     }
 
     override fun isOptedIntoAnalytics(): Boolean {
