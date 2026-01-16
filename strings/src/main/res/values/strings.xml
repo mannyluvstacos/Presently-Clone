@@ -78,10 +78,7 @@
     <string name="daily">Daily</string>
     <string name="weekly">Weekly</string>
     <string name="every">On every change</string>
-    <string name="dropbox_summary_off">Log in with your Dropbox account to automatically back up your entries</string>
-    <string name="dropbox_summary_on">Your entries are being backed up to Dropbox</string>
-    <string name="dropbox_setting_title">Back up your data with Dropbox</string>
-    <string name="dropbox_backup_frequency">Dropbox Backup Frequency</string>
+    <string name="automatic_backup_frequency">Automatic Backup Frequency</string>
     <string name="one_time_export_summary">Manually export your entries to CSV format to your device</string>
     <string name="one_time_export">Export entries to CSV</string>
     <string name="import_summary">Select a backed up CSV file to import</string>

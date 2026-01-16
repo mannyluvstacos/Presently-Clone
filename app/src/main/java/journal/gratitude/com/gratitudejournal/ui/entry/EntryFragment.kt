@@ -31,6 +31,7 @@ import com.jakewharton.rxbinding2.widget.RxTextView
 import com.presently.logging.AnalyticsLogger
 import com.presently.settings.BackupCadence
 import com.presently.settings.PresentlySettings
+import com.presently.settings.model.PRESENTLY_BACKUP
 import com.presently.sharing.view.SharingFragment
 import com.presently.ui.setStatusBarColorsForBackground
 import dagger.hilt.android.AndroidEntryPoint
@@ -42,7 +43,6 @@ import journal.gratitude.com.gratitudejournal.model.COPIED_QUOTE
 import journal.gratitude.com.gratitudejournal.model.SHARED_ENTRY
 import journal.gratitude.com.gratitudejournal.ui.dialog.CelebrateDialogFragment
 import journal.gratitude.com.gratitudejournal.util.backups.UploadToCloudWorker
-import journal.gratitude.com.gratitudejournal.util.backups.dropbox.DropboxUploader
 import journal.gratitude.com.gratitudejournal.util.toFullString
 import org.threeten.bp.LocalDate
 import java.util.concurrent.TimeUnit
@@ -220,12 +220,10 @@ class EntryFragment : Fragment(), MavericksView, EntryScreenCallbacks {
     }
 
     private fun backupEntryIfNeeded() {
-        val dbxCredential = settings.getAccessToken()
-
         val cadence = settings.getAutomaticBackupCadence()
-        if (dbxCredential != null && cadence == BackupCadence.EVERY_CHANGE) {
+        if (cadence == BackupCadence.EVERY_CHANGE) {
             val uploadWorkRequest = OneTimeWorkRequestBuilder<UploadToCloudWorker>()
-                .addTag(DropboxUploader.PRESENTLY_BACKUP)
+                .addTag(PRESENTLY_BACKUP)
                 .build()
             WorkManager.getInstance(requireContext()).enqueue(uploadWorkRequest)
         }

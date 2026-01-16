@@ -31,10 +31,6 @@ android {
                 arguments += mapOf("room.schemaLocation" to "$projectDir/schemas")
             }
         }
-
-        val dropboxKey = getDropboxKey()
-        buildConfigField("String", "DROPBOX_APP_KEY", "\"${dropboxKey}\"")
-        manifestPlaceholders["dropboxAppKey"] = dropboxKey
     }
 
     buildFeatures {
@@ -104,7 +100,6 @@ dependencies {
     implementation(Libraries.material)
     implementation(Libraries.play_services_oss_licenses)
     implementation(Libraries.compact_calendar_view)
-    implementation(Libraries.dropbox_sdk)
     implementation(Libraries.apache_text)
     implementation(Libraries.apache_csv)
 
@@ -162,9 +157,4 @@ dependencies {
 
 fun getVersionName(): String {
     return "${Versions.MAJOR}.${Versions.MINOR}.${Versions.PATCH}"
-}
-
-fun getDropboxKey(): String {
-    val localPropsKey = gradleLocalProperties(rootDir).getProperty("DROPBOX_KEY") ?: "missing_local_key"
-    return System.getenv("DROPBOX_APP_KEY") ?: localPropsKey
 }

@@ -1,7 +1,6 @@
 package com.presently.settings
 
 import android.content.Context
-import com.dropbox.core.oauth.DbxCredential
 import org.threeten.bp.LocalTime
 
 interface PresentlySettings {
@@ -34,16 +33,22 @@ interface PresentlySettings {
 
     fun shouldShowDayOfWeekInTimeline(): Boolean
 
-    fun getAccessToken(): DbxCredential?
+    @Deprecated("Dropbox support removed")
+    fun getAccessToken(): Any?
 
-    fun setAccessToken(newToken: DbxCredential)
+    @Deprecated("Dropbox support removed")
+    fun setAccessToken(newToken: Any?)
 
+    @Deprecated("Dropbox support removed")
     fun wasDropboxAuthInitiated(): Boolean
 
+    @Deprecated("Dropbox support removed")
     fun markDropboxAuthAsCancelled()
 
+    @Deprecated("Dropbox support removed")
     fun markDropboxAuthInitiated()
 
+    @Deprecated("Dropbox support removed")
     fun clearAccessToken()
 
     fun isOptedIntoAnalytics(): Boolean

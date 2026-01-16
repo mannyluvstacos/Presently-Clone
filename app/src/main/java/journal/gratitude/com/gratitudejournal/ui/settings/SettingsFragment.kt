@@ -13,7 +13,6 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.biometric.BiometricManager
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
@@ -23,7 +22,6 @@ import androidx.preference.*
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.dropbox.core.android.Auth
 import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.play.core.splitinstall.SplitInstallManager
@@ -43,8 +41,6 @@ import journal.gratitude.com.gratitudejournal.util.backups.LocalExporter.convert
 import journal.gratitude.com.gratitudejournal.util.backups.LocalExporter.exportEntriesToCsvFile
 import journal.gratitude.com.gratitudejournal.util.backups.RealCsvParser
 import journal.gratitude.com.gratitudejournal.util.backups.UploadToCloudWorker
-import journal.gratitude.com.gratitudejournal.util.backups.dropbox.DropboxUploader
-import journal.gratitude.com.gratitudejournal.util.backups.dropbox.DropboxUploader.Companion.PRESENTLY_BACKUP
 import journal.gratitude.com.gratitudejournal.util.reminders.NotificationScheduler
 import journal.gratitude.com.gratitudejournal.util.reminders.TimePreference
 import journal.gratitude.com.gratitudejournal.util.reminders.TimePreferenceFragment
@@ -52,7 +48,6 @@ import com.presently.ui.setStatusBarColorsForBackground
 import journal.gratitude.com.gratitudejournal.ui.themes.ThemeFragment
 import dagger.hilt.android.AndroidEntryPoint
 import journal.gratitude.com.gratitudejournal.repository.EntryRepository
-import journal.gratitude.com.gratitudejournal.util.backups.RealUploader.Companion.BACKUP_NOTIFICATION_ID
 import kotlinx.coroutines.launch
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
@@ -157,22 +152,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
             true
         }
 
-        val dropbox = findPreference<Preference>(BACKUP_TOKEN)
         val cadencePref = (findPreference<Preference>(BACKUP_CADENCE) as ListPreference)
-
-        dropbox?.setOnPreferenceClickListener {
-            val wantsToLogin = preferenceScreen.sharedPreferences.getBoolean(BACKUP_TOKEN, false)
-            if (!wantsToLogin) {
-                analytics.recordEvent(DROPBOX_DEAUTH)
-                lifecycleScope.launch {
-                    DropboxUploader.deauthorizeDropboxAccess(requireContext(), settings)
-                }
-            } else {
-                analytics.recordEvent(DROPBOX_AUTH_ATTEMPT)
-                DropboxUploader.authorizeDropboxAccess(requireContext(), settings)
-            }
-            true
-        }
 
         val cadence = settings.getAutomaticBackupCadence()
         val index = cadence.index
@@ -223,20 +203,6 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
         // Set up a listener whenever a key changes
         prefs.registerOnSharedPreferenceChangeListener(this)
-
-        // If we just resumed after launching the Dropbox activity
-        if (settings.wasDropboxAuthInitiated()) {
-            val token = Auth.getDbxCredential() //get token from Dropbox Auth activity
-            if (token == null) {
-                //user started to auth and didn't succeed
-                settings.markDropboxAuthAsCancelled()
-                activity?.recreate()
-            } else {
-                settings.setAccessToken(token)
-                createDropboxUploaderWorker(BackupCadence.DAILY)
-                cancelDropboxFailureNotifications() //now that user has auth'd cancel any notifs about previous failure
-            }
-        }
     }
 
     override fun onPause() {
@@ -264,10 +230,9 @@ class SettingsFragment : PreferenceFragmentCompat(),
                 }
             }
             BACKUP_CADENCE -> {
-                //todo test cadence works properly with dropbox
                 val cadence = settings.getAutomaticBackupCadence()
                 analytics.recordSelectEvent(cadence.string, "cadence")
-                createDropboxUploaderWorker(cadence)
+                createBackupWorker(cadence)
             }
             APP_LANGUAGE -> {
                 val language = settings.getLocale()
@@ -304,7 +269,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
             }
     }
 
-    private fun createDropboxUploaderWorker(cadence: BackupCadence) {
+    private fun createBackupWorker(cadence: BackupCadence) {
         WorkManager.getInstance(requireContext()).cancelAllWorkByTag(PRESENTLY_BACKUP)
 
         when (cadence) {
@@ -330,11 +295,6 @@ class SettingsFragment : PreferenceFragmentCompat(),
                 WorkManager.getInstance(requireContext()).enqueue(uploadWorkRequest)
             }
         }
-    }
-
-    private fun cancelDropboxFailureNotifications() {
-        val notificationManager = NotificationManagerCompat.from(requireContext())
-        notificationManager.cancel(BACKUP_NOTIFICATION_ID)
     }
 
     override fun onDisplayPreferenceDialog(preference: Preference) {
